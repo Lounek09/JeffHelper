@@ -100,19 +100,19 @@ public static class Program
         );
     }
 
-    private static T Ask<T>(string messageTemplace, object[] templateParameters, Func<string?, (bool, T)> validator)
+    private static T Ask<T>(string messageTemplate, object[] templateParameters, Func<string?, (bool, T)> validator)
     {
-        Log.Information(messageTemplace, templateParameters);
+        Log.Information(messageTemplate, templateParameters);
         var input = Console.ReadLine();
 
-        var (Success, Value) = validator(input);
-        if (Success)
+        var (success, value) = validator(input);
+        if (success)
         {
-            return Value;
+            return value;
         }
 
         Log.Warning("Invalid input");
-        return Ask(messageTemplace, templateParameters, validator);
+        return Ask(messageTemplate, templateParameters, validator);
     }
 
     private static void Generate(string path)
@@ -134,7 +134,7 @@ public static class Program
             string.Empty,
             false);
 
-        Log.Information("Images from {Path} successfully generated", path);
+        Log.Information("Directory {Path} done", path);
     }
 
     private static void Resize(string path)
@@ -177,7 +177,7 @@ public static class Program
                 secondarySizeImage.Save(Path.GetDirectoryName(file) + Path.DirectorySeparatorChar + size + Path.DirectorySeparatorChar + Path.GetFileName(file));
             }
 
-            Log.Information("Image {Path} successfully resized", file);
+            Log.Information("Image {Path} done", file);
         }
     }
 }
