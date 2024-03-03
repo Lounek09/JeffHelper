@@ -14,6 +14,7 @@ public static partial class Program
     public const string JEFF_DIR = "Jeff";
     public const string JEFF_REPO = "git@github.com:H3r3zy/Jeff.git";
 
+    private static string _scope = "main";
     private static int _mainSize = 256;
     private static int[] _secondarySizes = [32, 64, 128, 512];
 
@@ -60,6 +61,19 @@ public static partial class Program
 
     private static void Option()
     {
+        _scope = Ask("Enter scope, either 'classes' or 'main' (default [{Scope}]):",
+            [_scope],
+            input =>
+            {
+                if (string.IsNullOrEmpty(input))
+                {
+                    return (true, _scope);
+                }
+
+                return (true, input);
+            }
+        );
+
         _mainSize = Ask("Enter main size (default [{MainSize}]):",
             [_mainSize],
             input =>
@@ -134,7 +148,7 @@ public static partial class Program
         var outputPath = PathRegex().Replace(path, OUTPUT_DIR, 1);
 
         ExecuteCmd.ExecuteCommand("node",
-            $"Jeff/bin/jeff -i {path} -o {outputPath} -R true -d true -f \"[1]\" -w 2000",
+            $"Jeff/bin/jeff -i {path} -o {outputPath} -S {_scope} -R true -d true -f \"[1]\" -w 2000",
             string.Empty);
 
         Log.Information("Directory {Path} done", path);
