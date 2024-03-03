@@ -6,7 +6,7 @@ namespace JeffHelper.Utils;
 
 public static class ExecuteCmd
 {
-    public static void ExecuteCommand(string command, string args, string workingDirectory = "", bool showOutput = true)
+    public static void ExecuteCommand(string command, string args, string workingDirectory = "")
     {
         ProcessStartInfo startInfo = new()
         {
@@ -26,19 +26,13 @@ public static class ExecuteCmd
                 StartInfo = startInfo
             };
 
-            if (showOutput)
-            {
-                process.OutputDataReceived += Process_OutputDataReceived;
-                process.ErrorDataReceived += Process_ErrorDataReceived;
-            }
+            process.OutputDataReceived += Process_OutputDataReceived;
+            process.ErrorDataReceived += Process_ErrorDataReceived;
 
             process.Start();
 
-            if (showOutput)
-            {
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-            }
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
 
             process.WaitForExit();
         }

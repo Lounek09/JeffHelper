@@ -135,8 +135,7 @@ public static partial class Program
 
         ExecuteCmd.ExecuteCommand("node",
             $"Jeff/bin/jeff -i {path} -o {outputPath} -R true -d true -f \"[1]\" -w 2000",
-            string.Empty,
-            false);
+            string.Empty);
 
         Log.Information("Directory {Path} done", path);
     }
