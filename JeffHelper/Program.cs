@@ -3,10 +3,11 @@
 using Serilog;
 
 using System.Drawing;
+using System.Text.RegularExpressions;
 
 namespace JeffHelper;
 
-public static class Program
+public static partial class Program
 {
     public const string INPUT_DIR = "input";
     public const string OUTPUT_DIR = "output";
@@ -15,6 +16,9 @@ public static class Program
 
     private static int _mainSize = 256;
     private static int[] _secondarySizes = [32, 64, 128, 512];
+
+    [GeneratedRegex(INPUT_DIR)]
+    private static partial Regex PathRegex();
 
     public static void Main()
     {
@@ -127,7 +131,7 @@ public static class Program
             return;
         }
 
-        var outputPath = path.Replace(INPUT_DIR + Path.DirectorySeparatorChar, OUTPUT_DIR + Path.DirectorySeparatorChar);
+        var outputPath = PathRegex().Replace(path, OUTPUT_DIR, 1);
 
         ExecuteCmd.ExecuteCommand("node",
             $"Jeff/bin/jeff -i {path} -o {outputPath} -R true -d true -f \"[1]\" -w 2000",
