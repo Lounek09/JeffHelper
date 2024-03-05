@@ -195,7 +195,7 @@ public static partial class Program
             Resize(directory);
         }
 
-        var files = Directory.GetFiles(path, "*.png");
+        var files = Directory.GetFiles(path);
         if (files.Length == 0)
         {
             return;
