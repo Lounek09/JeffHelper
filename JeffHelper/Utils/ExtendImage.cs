@@ -119,16 +119,8 @@ public static class ExtendImage
             }
         }
 
-        rectangle = Rectangle.FromLTRB(xMin, yMin, xMax, yMax);
-        rectangle.Width += 1;
-        rectangle.Height += 1;
-
-        Bitmap output = new(rectangle.Width, rectangle.Height);
-
-        using var graphics = Graphics.FromImage(output);
-        graphics.DrawImage(source, 0, 0, rectangle, GraphicsUnit.Pixel);
-
-        return output;
+        rectangle = Rectangle.FromLTRB(xMin, yMin, xMax + 1, yMax + 1);
+        return source.Clone(rectangle, source.PixelFormat);
     }
 
     //src : https://stackoverflow.com/a/34705992
