@@ -3,10 +3,10 @@ A simple console application to automate images generation and resizing of SWF u
 
 ## Prerequisites
 
-- **Operating System :** Windows
-- **[.NET Core](https://dotnet.microsoft.com/download)** installed
-- **[Git](https://git-scm.com/downloads)** installed
-- **[Node.js](https://nodejs.org/en/download/)** installed with npm
+- **[Windows](https://www.microsoft.com/en-us/windows/)**
+- **[.NET Core](https://dotnet.microsoft.com/download)**
+- **[Bun](https://github.com/oven-sh/bun)**
+- **[Jeff](https://github.com/Lounek09/Jeff)**
 
 ## License
 

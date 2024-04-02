@@ -68,12 +68,6 @@ public static partial class Program
         {
             Directory.CreateDirectory(OUTPUT_DIR);
         }
-
-        if (!Directory.Exists(JEFF_DIR))
-        {
-            ExecuteCmd.ExecuteCommand("git", $"clone {JEFF_REPO}");
-            ExecuteCmd.ExecuteCommand("cmd", "/c npm install", JEFF_DIR);
-        }
     }
 
     private static void Option()
@@ -181,8 +175,8 @@ public static partial class Program
 
         var outputPath = PathRegex().Replace(path, OUTPUT_DIR, 1);
 
-        ExecuteCmd.ExecuteCommand("node",
-            $"Jeff/bin/jeff -i {path} -o {outputPath} -S {_scope} -R true -d true -f \"[1]\" -w {_exportSize}",
+        ExecuteCmd.ExecuteCommand("jeff",
+            $"-i {path} -o {outputPath} -S {_scope} -R true -d true -f \"[1]\" -w {_exportSize}",
             string.Empty);
 
         Log.Information("Directory {Path} done", path);
