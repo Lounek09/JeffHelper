@@ -9,22 +9,20 @@ namespace JeffHelper;
 
 public static partial class Program
 {
-    private const string INPUT_DIR = "input";
-    private const string OUTPUT_DIR = "output";
-    private const string JEFF_DIR = "Jeff";
-    private const string JEFF_REPO = "git@github.com:H3r3zy/Jeff.git";
+    private const string c_input = "input";
+    private const string c_output = "output";
 
-    private const string _defaultScope = "main";
-    private const int _defaultExportSize = 2048;
-    private const bool _defaultTrim = true;
-    private static readonly int[] _defaultSizes = [32, 64, 128, 256, 512];
+    private const string c_defaultScope = "main";
+    private const int c_defaultExportSize = 2048;
+    private const bool c_defaultTrim = true;
+    private static readonly int[] c_defaultSizes = [32, 64, 128, 256, 512];
 
-    private static string _scope = _defaultScope;
-    private static int _exportSize = _defaultExportSize;
-    private static bool _trim = _defaultTrim;
-    private static int[] _sizes = _defaultSizes;
+    private static string s_scope = c_defaultScope;
+    private static int s_exportSize = c_defaultExportSize;
+    private static bool s_trim = c_defaultTrim;
+    private static int[] s_sizes = c_defaultSizes;
 
-    [GeneratedRegex(INPUT_DIR)]
+    [GeneratedRegex(c_input)]
     private static partial Regex PathRegex();
 
     public static void Main()
@@ -36,12 +34,12 @@ public static partial class Program
             Option();
 
             Log.Information("Generating images...");
-            Generate(INPUT_DIR);
+            Generate(c_input);
 
-            if (_trim || _sizes.Length > 0)
+            if (s_trim || s_sizes.Length > 0)
             {
                 Log.Information("Resizing images...");
-                Resize(OUTPUT_DIR);
+                Resize(c_output);
             }
 
             Log.Information("Done, press {Q} to quit or any other key to continue", 'q');
@@ -59,39 +57,39 @@ public static partial class Program
             .WriteTo.Console()
             .CreateLogger();
 
-        if (!Directory.Exists(INPUT_DIR))
+        if (!Directory.Exists(c_input))
         {
-            Directory.CreateDirectory(INPUT_DIR);
+            Directory.CreateDirectory(c_input);
         }
 
-        if (!Directory.Exists(OUTPUT_DIR))
+        if (!Directory.Exists(c_output))
         {
-            Directory.CreateDirectory(OUTPUT_DIR);
+            Directory.CreateDirectory(c_output);
         }
     }
 
     private static void Option()
     {
-        _scope = Ask("Enter scope, either {Classes} or {Main} (default [{Scope}]):",
-            ["classes", "main", _defaultScope],
+        s_scope = Ask("Enter scope, either {Classes} or {Main} (default [{Scope}]):",
+            ["classes", "main", c_defaultScope],
             input =>
             {
                 if (string.IsNullOrEmpty(input))
                 {
-                    return (true, _defaultScope);
+                    return (true, c_defaultScope);
                 }
 
                 return (true, input);
             }
         );
 
-        _exportSize = Ask("Enter export size (default [{ExportSize}]):",
-            [_defaultExportSize],
+        s_exportSize = Ask("Enter export size (default [{ExportSize}]):",
+            [c_defaultExportSize],
             input =>
             {
                 if (string.IsNullOrEmpty(input))
                 {
-                    return (true, _defaultExportSize);
+                    return (true, c_defaultExportSize);
                 }
 
                 if (int.TryParse(input, out var size))
@@ -103,13 +101,13 @@ public static partial class Program
             }
         );
 
-        _trim = Ask("Trim images? (default [{Trim}]):",
-            [_defaultTrim],
+        s_trim = Ask("Trim images? (default [{Trim}]):",
+            [c_defaultTrim],
             input =>
             {
                 if (string.IsNullOrEmpty(input))
                 {
-                    return (true, _defaultTrim);
+                    return (true, c_defaultTrim);
                 }
 
                 var trim = input.Equals("true", StringComparison.OrdinalIgnoreCase) ||
@@ -120,13 +118,13 @@ public static partial class Program
             }
         );
 
-        _sizes = Ask("Enter sizes as a comma-separated list (default [{Sizes}] or enter {0} for none):",
-            [string.Join(',', _defaultSizes), '0'],
+        s_sizes = Ask("Enter sizes as a comma-separated list (default [{Sizes}] or enter {0} for none):",
+            [string.Join(',', c_defaultSizes), '0'],
             input =>
             {
                 if (string.IsNullOrEmpty(input))
                 {
-                    return (true, _defaultSizes);
+                    return (true, c_defaultSizes);
                 }
 
                 if (input == "0")
@@ -173,10 +171,10 @@ public static partial class Program
             return;
         }
 
-        var outputPath = PathRegex().Replace(path, OUTPUT_DIR, 1);
+        var outputPath = PathRegex().Replace(path, c_output, 1);
 
         ExecuteCmd.ExecuteCommand("jeff",
-            $"-i {path} -o {outputPath} -S {_scope} -R true -d true -f \"[1]\" -w {_exportSize}",
+            $"-i {path} -o {outputPath} -S {s_scope} -R true -d true -f \"[1]\" -w {s_exportSize}",
             string.Empty);
 
         Log.Information("Directory {Path} done", path);
@@ -195,7 +193,7 @@ public static partial class Program
             return;
         }
 
-        foreach (var size in _sizes)
+        foreach (var size in s_sizes)
         {
             var sizePath = Path.Join(path, size.ToString());
             if (!Directory.Exists(sizePath))
@@ -209,12 +207,12 @@ public static partial class Program
             FileStream stream = new(file, FileMode.Open);
             var image = Image.FromStream(stream);
 
-            if (_trim)
+            if (s_trim)
             {
                 image = image.Trim();
             }
 
-            foreach (var size in _sizes)
+            foreach (var size in s_sizes)
             {
                 using var secondarySizeImage = image.Resize(size, size);
 
@@ -225,7 +223,7 @@ public static partial class Program
             stream.Dispose();
             image.Dispose();
 
-            if (_sizes.Length > 0)
+            if (s_sizes.Length > 0)
             {
                 File.Delete(file);
             }
