@@ -1,41 +1,32 @@
-﻿using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace JeffHelper.Utils;
 
+/// <summary>
+/// Provides extension methods for the Image class.
+/// </summary>
 public static class ExtendImage
 {
-    public static Image Trim(this Image source)
+    /// <summary>
+    /// Trims the image by removing transparent edges.
+    /// </summary>
+    /// <param name="source">The source image to trim.</param>
+    /// <remarks>Source: https://stackoverflow.com/a/4821100</remarks>
+    public static void Trim(this Image<Rgba32> source)
     {
-        return new Bitmap(source).Trim();
-    }
-
-    //src : https://stackoverflow.com/a/4821100
-    public static Image Trim(this Bitmap source)
-    {
-        var rectangle = new Rectangle(0, 0, source.Width, source.Height);
-        var data = source.LockBits(rectangle, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-        var buffer = new byte[data.Height * data.Stride];
-        Marshal.Copy(data.Scan0, buffer, 0, buffer.Length);
-        source.UnlockBits(data);
-
-        int xMin = int.MaxValue,
-            xMax = int.MinValue,
-            yMin = int.MaxValue,
-            yMax = int.MinValue;
-
+        int xMin = int.MaxValue, xMax = int.MinValue, yMin = int.MaxValue, yMax = int.MinValue;
         var foundPixel = false;
 
         // Find xMin
-        for (var x = 0; x < data.Width; x++)
+        for (var x = 0; x < source.Width; x++)
         {
             var stop = false;
-            for (var y = 0; y < data.Height; y++)
+            for (var y = 0; y < source.Height; y++)
             {
-                var alpha = buffer[y * data.Stride + 4 * x + 3];
-                if (alpha != 0)
+                var pixel = source[x, y];
+                if (pixel.A > 0)
                 {
                     xMin = x;
                     stop = true;
@@ -53,17 +44,17 @@ public static class ExtendImage
         // Image is empty
         if (!foundPixel)
         {
-            return source;
+            return;
         }
 
         // Find yMin
-        for (var y = 0; y < data.Height; y++)
+        for (var y = 0; y < source.Height; y++)
         {
             var stop = false;
-            for (var x = xMin; x < data.Width; x++)
+            for (var x = xMin; x < source.Width; x++)
             {
-                var alpha = buffer[y * data.Stride + 4 * x + 3];
-                if (alpha != 0)
+                var pixel = source[x, y];
+                if (pixel.A > 0)
                 {
                     yMin = y;
                     stop = true;
@@ -78,13 +69,13 @@ public static class ExtendImage
         }
 
         // Find xMax
-        for (var x = data.Width - 1; x >= xMin; x--)
+        for (var x = source.Width - 1; x >= xMin; x--)
         {
             var stop = false;
-            for (var y = yMin; y < data.Height; y++)
+            for (var y = yMin; y < source.Height; y++)
             {
-                var alpha = buffer[y * data.Stride + 4 * x + 3];
-                if (alpha != 0)
+                var pixel = source[x, y];
+                if (pixel.A > 0)
                 {
                     xMax = x;
                     stop = true;
@@ -99,13 +90,13 @@ public static class ExtendImage
         }
 
         // Find yMax
-        for (var y = data.Height - 1; y >= yMin; y--)
+        for (var y = source.Height - 1; y >= yMin; y--)
         {
             var stop = false;
             for (var x = xMin; x <= xMax; x++)
             {
-                var alpha = buffer[y * data.Stride + 4 * x + 3];
-                if (alpha != 0)
+                var pixel = source[x, y];
+                if (pixel.A > 0)
                 {
                     yMax = y;
                     stop = true;
@@ -119,16 +110,23 @@ public static class ExtendImage
             }
         }
 
-        rectangle = Rectangle.FromLTRB(xMin, yMin, xMax + 1, yMax + 1);
-        return source.Clone(rectangle, source.PixelFormat);
+        var rectangle = Rectangle.FromLTRB(xMin, yMin, xMax + 1, yMax + 1);
+        source.Mutate(x => x.Crop(rectangle));
     }
 
-    //src : https://stackoverflow.com/a/34705992
-    public static Image Resize(this Image image, int width, int height)
+    /// <summary>
+    /// Creates a new image that is a resized copy of the source image.
+    /// </summary>
+    /// <param name="image">The source image to resize.</param>
+    /// <param name="width">The desired width of the output image.</param>
+    /// <param name="height">The desired height of the output image.</param>
+    /// <returns>A new image that is the resized version of the source image.</returns>
+    /// <remarks>Source: https://stackoverflow.com/a/34705992</remarks>
+    public static Image<Rgba32> CreateResizedCopy(this Image<Rgba32> image, int width, int height)
     {
-        var ratioW = width / (double)image.Width;
-        var ratioH = height / (double)image.Height;
-        var ratio = Math.Min(ratioW, ratioH);
+        var ratioWidth = width / (double)image.Width;
+        var ratioHeight = height / (double)image.Height;
+        var ratio = Math.Min(ratioWidth, ratioHeight);
 
         var scaledWidth = (int)(image.Width * ratio);
         var scaledHeight = (int)(image.Height * ratio);
@@ -136,15 +134,13 @@ public static class ExtendImage
         var posX = (width - scaledWidth) / 2;
         var posY = (height - scaledHeight) / 2;
 
-        Rectangle rectangle = new(posX, posY, scaledWidth, scaledHeight);
+        Image<Rgba32> output = new(width, height, new Rgba32());
 
-        Bitmap output = new(width, height, image.PixelFormat);
-
-        using var graphics = Graphics.FromImage(output);
-        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-        graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-        graphics.SmoothingMode = SmoothingMode.HighQuality;
-        graphics.DrawImage(image, rectangle);
+        output.Mutate(x =>
+        {
+            var resizedImage = image.Clone(ctx => ctx.Resize(scaledWidth, scaledHeight));
+            x.DrawImage(resizedImage, new Point(posX, posY), 1f);
+        });
 
         return output;
     }

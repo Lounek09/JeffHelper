@@ -2,7 +2,9 @@
 
 using Serilog;
 
-using System.Drawing;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+
 using System.Text.RegularExpressions;
 
 namespace JeffHelper;
@@ -34,12 +36,12 @@ public static partial class Program
             Option();
 
             Log.Information("Generating images...");
-            Generate(c_input);
+            Generate();
 
             if (s_trim || s_sizes.Length > 0)
             {
                 Log.Information("Resizing images...");
-                Resize(c_output);
+                Resize();
             }
 
             Log.Information("Done, press {Q} to quit or any other key to continue", 'q');
@@ -51,6 +53,9 @@ public static partial class Program
         }
     }
 
+    /// <summary>
+    /// Initializes the program.
+    /// </summary>
     private static void Initialize()
     {
         Log.Logger = new LoggerConfiguration()
@@ -68,6 +73,9 @@ public static partial class Program
         }
     }
 
+    /// <summary>
+    /// Asks the user for options.
+    /// </summary>
     private static void Option()
     {
         s_scope = Ask("Enter scope, either {Classes} or {Main} (default [{Scope}]):",
@@ -144,6 +152,14 @@ public static partial class Program
         );
     }
 
+    /// <summary>
+    /// Asks the user a question and validates the input.
+    /// </summary>
+    /// <typeparam name="T">The type of the expected answer.</typeparam>
+    /// <param name="messageTemplate">The question to ask.</param>
+    /// <param name="templateParameters">The parameters for the question.</param>
+    /// <param name="validator">The function to validate the answer.</param>
+    /// <returns>The validated answer.</returns>
     private static T Ask<T>(string messageTemplate, object[] templateParameters, Func<string?, (bool, T)> validator)
     {
         Log.Information(messageTemplate, templateParameters);
@@ -159,7 +175,11 @@ public static partial class Program
         return Ask(messageTemplate, templateParameters, validator);
     }
 
-    private static void Generate(string path)
+    /// <summary>
+    /// Generates images from the input path using Jeff and saves them to the output path.
+    /// </summary>
+    /// <param name="path">The path to generate images for.</param>
+    private static void Generate(string path = c_input)
     {
         foreach (var directory in Directory.GetDirectories(path))
         {
@@ -173,14 +193,18 @@ public static partial class Program
 
         var outputPath = PathRegex().Replace(path, c_output, 1);
 
-        ExecuteCmd.ExecuteCommand("jeff",
+        ExecuteCmd.Execute("jeff",
             $"-i {path} -o {outputPath} -S {s_scope} -R true -d true -f \"[1]\" -w {s_exportSize}",
             string.Empty);
 
-        Log.Information("Directory {Path} done", path);
+        Log.Information("Images generated successfully for {Path}", path);
     }
 
-    private static void Resize(string path)
+    /// <summary>
+    /// Trims and resizes images from the output path.
+    /// </summary>
+    /// <param name="path">The path to resize images for.</param>
+    private static void Resize(string path = c_output)
     {
         foreach (var directory in Directory.GetDirectories(path))
         {
@@ -204,24 +228,20 @@ public static partial class Program
 
         foreach (var file in files)
         {
-            FileStream stream = new(file, FileMode.Open);
-            var image = Image.FromStream(stream);
+            using var image = Image.Load<Rgba32>(file);
 
             if (s_trim)
             {
-                image = image.Trim();
+                image.Trim();
             }
 
             foreach (var size in s_sizes)
             {
-                using var secondarySizeImage = image.Resize(size, size);
+                using var resizedImage = image.CreateResizedCopy(size, size);
 
                 var filePath = Path.Join(Path.GetDirectoryName(file), size.ToString(), Path.GetFileName(file));
-                secondarySizeImage.Save(filePath);
+                resizedImage.Save(filePath);
             }
-
-            stream.Dispose();
-            image.Dispose();
 
             if (s_sizes.Length > 0)
             {

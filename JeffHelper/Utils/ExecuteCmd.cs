@@ -4,9 +4,19 @@ using System.Diagnostics;
 
 namespace JeffHelper.Utils;
 
+/// <summary>
+/// Provides methods for executing command line commands.
+/// </summary>
 public static class ExecuteCmd
 {
-    public static void ExecuteCommand(string command, string args, string workingDirectory = "")
+    /// <summary>
+    /// Executes a command line command.
+    /// </summary>
+    /// <param name="command">The command to execute.</param>
+    /// <param name="args">The arguments for the command.</param>
+    /// <param name="workingDirectory">The working directory for the command. Default is empty string.</param>
+    /// <returns>True if the command executed successfully; otherwise, false.</returns>
+    public static bool Execute(string command, string args, string workingDirectory = "")
     {
         ProcessStartInfo startInfo = new()
         {
@@ -35,26 +45,38 @@ public static class ExecuteCmd
             process.BeginErrorReadLine();
 
             process.WaitForExit();
+            return process.ExitCode == 0;
         }
         catch (Exception e)
         {
-            Log.Error(e, "An error occured while execute {CommandName} command", command);
+            Log.Error(e, "An error occured while execute the command {CommandName}", command);
+            return false;
         }
     }
 
-    private static void Process_OutputDataReceived(object sender, DataReceivedEventArgs e)
+    /// <summary>
+    /// Handles the OutputDataReceived event of the Process.
+    /// </summary>
+    /// <param name="sender">The source of the event.</param>
+    /// <param name="args">The DataReceivedEventArgs instance containing the event data.</param>
+    private static void Process_OutputDataReceived(object sender, DataReceivedEventArgs args)
     {
-        if (!string.IsNullOrEmpty(e.Data))
+        if (!string.IsNullOrEmpty(args.Data))
         {
-            Log.Information(e.Data);
+            Log.Information(args.Data);
         }
     }
 
-    private static void Process_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+    /// <summary>
+    /// Handles the ErrorDataReceived event of the Process.
+    /// </summary>
+    /// <param name="sender">The source of the event.</param>
+    /// <param name="args">The DataReceivedEventArgs instance containing the event data.</param>
+    private static void Process_ErrorDataReceived(object sender, DataReceivedEventArgs args)
     {
-        if (!string.IsNullOrEmpty(e.Data))
+        if (!string.IsNullOrEmpty(args.Data))
         {
-            Log.Error(e.Data);
+            Log.Error(args.Data);
         }
     }
 }
