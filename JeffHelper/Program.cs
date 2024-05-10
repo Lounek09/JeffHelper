@@ -193,9 +193,7 @@ public static partial class Program
 
         var outputPath = PathRegex().Replace(path, c_output, 1);
 
-        ExecuteCmd.Execute("jeff",
-            $"-i {path} -o {outputPath} -S {s_scope} -R true -d true -f \"[1]\" -w {s_exportSize}",
-            string.Empty);
+        ExecuteCmd.Execute("jeff", $"-i {path} -o {outputPath} -S {s_scope} -R true -d true -f \"[1]\" -w {s_exportSize}");
 
         Log.Information("Images generated successfully for {Path}", path);
     }
