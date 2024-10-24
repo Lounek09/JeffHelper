@@ -18,11 +18,13 @@ public static partial class Program
     private const int c_defaultExportSize = 2048;
     private const bool c_defaultTrim = true;
     private static readonly IReadOnlyList<int> s_defaultSizes = [32, 64, 128, 256, 512];
+    private const bool c_square = true;
 
     private static string s_scope = c_defaultScope;
     private static int s_exportSize = c_defaultExportSize;
     private static bool s_trim = c_defaultTrim;
     private static IReadOnlyList<int> s_sizes = s_defaultSizes;
+    private static bool s_square = c_square;
 
     [GeneratedRegex(c_input)]
     private static partial Regex PathRegex();
@@ -33,7 +35,7 @@ public static partial class Program
 
         while (true)
         {
-            Option();
+            Options();
 
             Log.Information("Generating images...");
             Generate();
@@ -44,9 +46,8 @@ public static partial class Program
                 Resize();
             }
 
-            Log.Information("Done, press {Q} to quit or any other key to continue", 'q');
-            var key = Console.ReadKey();
-            if (key.Key is ConsoleKey.Q)
+            Log.Information("Done, press {Key} to quit or any other key to continue", 'q');
+            if (Console.ReadKey().Key == ConsoleKey.Q)
             {
                 break;
             }
@@ -62,21 +63,14 @@ public static partial class Program
             .WriteTo.Console()
             .CreateLogger();
 
-        if (!Directory.Exists(c_input))
-        {
-            Directory.CreateDirectory(c_input);
-        }
-
-        if (!Directory.Exists(c_output))
-        {
-            Directory.CreateDirectory(c_output);
-        }
+        Directory.CreateDirectory(c_input);
+        Directory.CreateDirectory(c_output);
     }
 
     /// <summary>
     /// Asks the user for options.
     /// </summary>
-    private static void Option()
+    private static void Options()
     {
         s_scope = Ask("Enter scope, either {Classes} or {Main} (default [{Scope}]):",
             ["classes", "main", s_scope],
@@ -126,7 +120,7 @@ public static partial class Program
             }
         );
 
-        s_sizes = Ask("Enter sizes as a comma-separated list (default [{Sizes}] or enter {0} for none):",
+        s_sizes = Ask("Enter sizes as a comma-separated list (default [{Sizes}]), enter {Zero} for none:",
             [string.Join(',', s_sizes), '0'],
             input =>
             {
@@ -150,6 +144,26 @@ public static partial class Program
                 }
             }
         );
+
+        if (s_sizes.Count > 0)
+        {
+            s_square = Ask("Square images output? (default [{Square}]):",
+                [s_square],
+                input =>
+                {
+                    if (string.IsNullOrEmpty(input))
+                    {
+                        return (true, s_square);
+                    }
+
+                    var square = input.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+                        input.Equals("y", StringComparison.OrdinalIgnoreCase) ||
+                        input.Equals("yes", StringComparison.OrdinalIgnoreCase);
+
+                    return (true, square);
+                }
+            );
+        }
     }
 
     /// <summary>
@@ -195,7 +209,7 @@ public static partial class Program
 
         ExecuteCmd.Execute("jeff", $"-i {path} -o {outputPath} -S {s_scope} -R true -d true -f \"[1]\" -w {s_exportSize}");
 
-        Log.Information("Images generated successfully for {Path}", path);
+        Log.Information("Swf files in {Path} successfully generated in {OutputPath}", path, outputPath);
     }
 
     /// <summary>
@@ -218,35 +232,56 @@ public static partial class Program
         foreach (var size in s_sizes)
         {
             var sizePath = Path.Join(path, size.ToString());
-            if (!Directory.Exists(sizePath))
-            {
-                Directory.CreateDirectory(sizePath);
-            }
+            Directory.CreateDirectory(sizePath);
         }
 
         foreach (var file in files)
         {
+            var directory = Path.GetDirectoryName(file);
+            var fileName = Path.GetFileName(file);
+
             using var image = Image.Load<Rgba32>(file);
+            var isModified = false;
 
             if (s_trim)
             {
                 image.Trim();
-            }
-
-            foreach (var size in s_sizes)
-            {
-                using var resizedImage = image.CreateResizedCopy(size, size);
-
-                var filePath = Path.Join(Path.GetDirectoryName(file), size.ToString(), Path.GetFileName(file));
-                resizedImage.Save(filePath);
+                isModified = true;
             }
 
             if (s_sizes.Count > 0)
             {
+                foreach (var size in s_sizes)
+                {
+                    var width = size;
+                    var height = size;
+
+                    if (!s_square)
+                    {
+                        if (image.Width > image.Height)
+                        {
+                            height = (int)(size * (image.Height / (double)image.Width));
+                        }
+                        else if (image.Height > image.Width)
+                        {
+                            width = (int)(size * (image.Width / (double)image.Height));
+                        }
+                    }
+
+                    using var resizedImage = image.CreateResizedCopy(width, height);
+
+                    var filePath = Path.Join(directory, size.ToString(), fileName);
+                    resizedImage.Save(filePath);
+                }
+
                 File.Delete(file);
             }
+            else if (isModified)
+            {
+                image.Save(file);
+            }
 
-            Log.Information("Image {Path} done", file);
+            Log.Information("Image {Path} resized", file);
         }
     }
 }
