@@ -35,7 +35,7 @@ public static partial class Program
 
         while (true)
         {
-            Options();
+            AskOptions();
 
             Log.Information("Generating images...");
             Generate();
@@ -70,30 +70,19 @@ public static partial class Program
     /// <summary>
     /// Asks the user for options.
     /// </summary>
-    private static void Options()
+    private static void AskOptions()
     {
-        s_scope = Ask("Enter scope, either {Classes} or {Main} (default [{Scope}]):",
+        s_scope = Question.Ask("Enter scope, either {Classes} or {Main} (default [{Scope}]):",
             ["classes", "main", s_scope],
-            input =>
-            {
-                if (string.IsNullOrEmpty(input))
-                {
-                    return (true, s_scope);
-                }
-
-                return (true, input);
-            }
+            s_scope,
+            input => (true, input)
         );
 
-        s_exportSize = Ask("Enter export size (default [{ExportSize}]):",
+        s_exportSize = Question.Ask("Enter export size (default [{ExportSize}]):",
             [s_exportSize],
+            s_exportSize,
             input =>
             {
-                if (string.IsNullOrEmpty(input))
-                {
-                    return (true, s_exportSize);
-                }
-
                 if (int.TryParse(input, out var size))
                 {
                     return (true, size);
@@ -103,32 +92,17 @@ public static partial class Program
             }
         );
 
-        s_trim = Ask("Trim images? (default [{Trim}]):",
+        s_trim = Question.Ask("Trim images? (default [{Trim}]):",
             [s_trim],
-            input =>
-            {
-                if (string.IsNullOrEmpty(input))
-                {
-                    return (true, s_trim);
-                }
-
-                var trim = input.Equals("true", StringComparison.OrdinalIgnoreCase) ||
-                    input.Equals("y", StringComparison.OrdinalIgnoreCase) ||
-                    input.Equals("yes", StringComparison.OrdinalIgnoreCase);
-
-                return (true, trim);
-            }
+            s_trim,
+            input => (true, Answer.IsYes(input))
         );
 
-        s_sizes = Ask("Enter sizes as a comma-separated list (default [{Sizes}]), enter {Zero} for none:",
+        s_sizes = Question.Ask("Enter sizes as a comma-separated list (default [{Sizes}]), enter {Zero} for none:",
             [string.Join(',', s_sizes), '0'],
+            s_sizes,
             input =>
             {
-                if (string.IsNullOrEmpty(input))
-                {
-                    return (true, s_sizes);
-                }
-
                 if (input == "0")
                 {
                     return (true, []);
@@ -147,46 +121,12 @@ public static partial class Program
 
         if (s_sizes.Count > 0)
         {
-            s_square = Ask("Square images output? (default [{Square}]):",
+            s_square = Question.Ask("Square images output? (default [{Square}]):",
                 [s_square],
-                input =>
-                {
-                    if (string.IsNullOrEmpty(input))
-                    {
-                        return (true, s_square);
-                    }
-
-                    var square = input.Equals("true", StringComparison.OrdinalIgnoreCase) ||
-                        input.Equals("y", StringComparison.OrdinalIgnoreCase) ||
-                        input.Equals("yes", StringComparison.OrdinalIgnoreCase);
-
-                    return (true, square);
-                }
+                s_square,
+                input => (true, Answer.IsYes(input))
             );
         }
-    }
-
-    /// <summary>
-    /// Asks the user a question and validates the input.
-    /// </summary>
-    /// <typeparam name="T">The type of the expected answer.</typeparam>
-    /// <param name="messageTemplate">The question to ask.</param>
-    /// <param name="templateParameters">The parameters for the question.</param>
-    /// <param name="validator">The function to validate the answer.</param>
-    /// <returns>The validated answer.</returns>
-    private static T Ask<T>(string messageTemplate, object[] templateParameters, Func<string?, (bool, T)> validator)
-    {
-        Log.Information(messageTemplate, templateParameters);
-        var input = Console.ReadLine();
-
-        var (success, value) = validator(input);
-        if (success)
-        {
-            return value;
-        }
-
-        Log.Warning("Invalid input");
-        return Ask(messageTemplate, templateParameters, validator);
     }
 
     /// <summary>
