@@ -17,12 +17,12 @@ public static partial class Program
     private const string c_defaultScope = "main";
     private const int c_defaultExportSize = 2048;
     private const bool c_defaultTrim = true;
-    private static readonly int[] c_defaultSizes = [32, 64, 128, 256, 512];
+    private static readonly IReadOnlyList<int> s_defaultSizes = [32, 64, 128, 256, 512];
 
     private static string s_scope = c_defaultScope;
     private static int s_exportSize = c_defaultExportSize;
     private static bool s_trim = c_defaultTrim;
-    private static int[] s_sizes = c_defaultSizes;
+    private static IReadOnlyList<int> s_sizes = s_defaultSizes;
 
     [GeneratedRegex(c_input)]
     private static partial Regex PathRegex();
@@ -38,7 +38,7 @@ public static partial class Program
             Log.Information("Generating images...");
             Generate();
 
-            if (s_trim || s_sizes.Length > 0)
+            if (s_trim || s_sizes.Count > 0)
             {
                 Log.Information("Resizing images...");
                 Resize();
@@ -79,12 +79,12 @@ public static partial class Program
     private static void Option()
     {
         s_scope = Ask("Enter scope, either {Classes} or {Main} (default [{Scope}]):",
-            ["classes", "main", c_defaultScope],
+            ["classes", "main", s_scope],
             input =>
             {
                 if (string.IsNullOrEmpty(input))
                 {
-                    return (true, c_defaultScope);
+                    return (true, s_scope);
                 }
 
                 return (true, input);
@@ -92,12 +92,12 @@ public static partial class Program
         );
 
         s_exportSize = Ask("Enter export size (default [{ExportSize}]):",
-            [c_defaultExportSize],
+            [s_exportSize],
             input =>
             {
                 if (string.IsNullOrEmpty(input))
                 {
-                    return (true, c_defaultExportSize);
+                    return (true, s_exportSize);
                 }
 
                 if (int.TryParse(input, out var size))
@@ -110,12 +110,12 @@ public static partial class Program
         );
 
         s_trim = Ask("Trim images? (default [{Trim}]):",
-            [c_defaultTrim],
+            [s_trim],
             input =>
             {
                 if (string.IsNullOrEmpty(input))
                 {
-                    return (true, c_defaultTrim);
+                    return (true, s_trim);
                 }
 
                 var trim = input.Equals("true", StringComparison.OrdinalIgnoreCase) ||
@@ -127,12 +127,12 @@ public static partial class Program
         );
 
         s_sizes = Ask("Enter sizes as a comma-separated list (default [{Sizes}] or enter {0} for none):",
-            [string.Join(',', c_defaultSizes), '0'],
+            [string.Join(',', s_sizes), '0'],
             input =>
             {
                 if (string.IsNullOrEmpty(input))
                 {
-                    return (true, c_defaultSizes);
+                    return (true, s_sizes);
                 }
 
                 if (input == "0")
@@ -241,7 +241,7 @@ public static partial class Program
                 resizedImage.Save(filePath);
             }
 
-            if (s_sizes.Length > 0)
+            if (s_sizes.Count > 0)
             {
                 File.Delete(file);
             }
