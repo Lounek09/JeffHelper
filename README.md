@@ -9,7 +9,7 @@ A simple console application to automate images generation and resizing of SWF u
 
 ## License
 
-Copyright (C) 2024 Lounek
+Copyright (C) 2024-2025 Lounek
 
 
 This program is free software: you can redistribute it and/or modify
