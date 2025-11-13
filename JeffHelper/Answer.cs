@@ -8,7 +8,7 @@ public static class Answer
     private static readonly IReadOnlyCollection<string> s_yesAnswers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "y", "yes", "t", "true"
-    };
+    }.AsReadOnly();
 
     /// <summary>
     /// Checks if the input is yes.

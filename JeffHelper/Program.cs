@@ -29,35 +29,7 @@ public static partial class Program
     [GeneratedRegex(c_input)]
     private static partial Regex PathRegex();
 
-    public static void Main()
-    {
-        Initialize();
-
-        while (true)
-        {
-            AskOptions();
-
-            Log.Information("Generating images...");
-            Generate();
-
-            if (s_trim || s_sizes.Count > 0)
-            {
-                Log.Information("Resizing images...");
-                Resize();
-            }
-
-            Log.Information("Done, press {Key} to quit or any other key to continue", 'q');
-            if (Console.ReadKey().Key == ConsoleKey.Q)
-            {
-                break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Initializes the program.
-    /// </summary>
-    private static void Initialize()
+    public static int Main()
     {
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
@@ -65,6 +37,26 @@ public static partial class Program
 
         Directory.CreateDirectory(c_input);
         Directory.CreateDirectory(c_output);
+
+    Retry:
+        AskOptions();
+
+        Log.Information("Generating images...");
+        Generate();
+
+        if (s_trim || s_sizes.Count > 0)
+        {
+            Log.Information("Resizing images...");
+            Resize();
+        }
+
+        Log.Information("Done, press {Key} to quit or any other key to continue", 'q');
+        if (Console.ReadKey().Key == ConsoleKey.Q)
+        {
+            return 0;
+        }
+
+        goto Retry;
     }
 
     /// <summary>
@@ -114,7 +106,7 @@ public static partial class Program
                 }
                 catch
                 {
-                    return (false, []); 
+                    return (false, []);
                 }
             }
         );
