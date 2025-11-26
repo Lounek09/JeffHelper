@@ -9,7 +9,7 @@ namespace JeffHelper.Utils;
 /// </summary>
 public static class ExtendImage
 {
-    extension<T>(Image<T> source) where T : unmanaged, IPixel<T>
+    extension(Image<Rgba32> source)
     {
         /// <summary>
         /// Trims the image by removing transparent edges.

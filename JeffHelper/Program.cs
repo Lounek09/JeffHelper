@@ -141,7 +141,7 @@ public static partial class Program
 
         ExecuteCmd.Execute("jeff", $"-i {path} -o {outputPath} -S {s_scope} -R true -d true -f \"[1]\" -w {s_exportSize}");
 
-        Log.Information("Swf files in {Path} successfully generated in {OutputPath}", path, outputPath);
+        Log.Information("Swf files in {Path} successfully generated to {OutputPath}", path, outputPath);
     }
 
     /// <summary>
